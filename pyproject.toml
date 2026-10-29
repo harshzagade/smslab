@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["sms", "otp", "testing", "mock", "cli", "integration-testing"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
@@ -32,7 +32,9 @@ dependencies = []
 smslab = "smslab.cli:main"
 
 [project.urls]
-Repository = "https://github.com/example/smslab"
+Homepage = "https://github.com/harshzagade/smslab"
+Repository = "https://github.com/harshzagade/smslab"
+Issues = "https://github.com/harshzagade/smslab/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
