@@ -33,3 +33,8 @@ jobs:
         run: |
           smslab loadtest --config examples/config.example.json --volume 3 --concurrency 2 --report /tmp/smslab-load.json
           python -c "import json; report=json.load(open('/tmp/smslab-load.json', encoding='utf-8')); assert report['summary']['total'] == 3; assert report['summary']['failed'] == 0"
+
+      - name: Mock-burst smoke check
+        run: |
+          smslab mock-burst --attempts 10 --limit 2 --window-seconds 60 --report /tmp/smslab-burst.json
+          python -c "import json; report=json.load(open('/tmp/smslab-burst.json', encoding='utf-8')); assert report['summary']['attempted'] == 10; assert report['summary']['accepted_by_mock_limiter'] == 2; assert report['summary']['rejected_rate_limit'] == 8; assert report['actual_transmissions'] == 0; assert all(not item['sms_sent'] for item in report['results'])"
