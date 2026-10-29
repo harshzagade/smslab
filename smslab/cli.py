@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from smslab import __version__
+from smslab.burst import simulate_burst, write_burst_report
 from smslab.config import MAX_CONCURRENCY, MAX_REQUESTS, SMS_SCENARIOS, ConfigError, TestCase, load_config
 from smslab.phones import PhoneNumberError, normalize_indian_mobile
 from smslab.runner import run_cases, write_report
@@ -60,6 +61,15 @@ def build_parser():
     load.add_argument("--recipient")
     load.add_argument("--scenario", choices=sorted(SMS_SCENARIOS), default="success")
     load.add_argument("--report", required=True)
+
+    burst = subs.add_parser(
+        "mock-burst",
+        help="Simulate a bounded burst against an in-process rate limiter; sends no SMS.",
+    )
+    burst.add_argument("--attempts", type=int, default=10)
+    burst.add_argument("--limit", type=int, default=2)
+    burst.add_argument("--window-seconds", type=int, default=60)
+    burst.add_argument("--report", required=True)
     return parser
 
 
@@ -104,6 +114,22 @@ def main(argv: list[str] | None = None) -> int:
                 print("OTP scenarios:")
                 for key, expected in (("success", "verified"), ("wrong_code", "wrong_code"), ("expired", "expired"), ("lockout", "locked")):
                     print(f"  {key}: expected outcome {expected}")
+            return 0
+
+        if args.command == "mock-burst":
+            report = simulate_burst(
+                attempts=args.attempts,
+                limit=args.limit,
+                window_seconds=args.window_seconds,
+            )
+            write_burst_report(report, args.report)
+            summary = report["summary"]
+            print(
+                f"Mock burst complete: {summary['attempted']} attempts; "
+                f"{summary['accepted_by_mock_limiter']} accepted by mock limiter; "
+                f"{summary['rejected_rate_limit']} rate-limited; 0 SMS sent."
+            )
+            print(f"Report written: {args.report}")
             return 0
 
         config = load_config(args.config)
