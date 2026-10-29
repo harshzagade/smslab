@@ -1,0 +1,63 @@
+{
+  "transport": "mock",
+  "seed": 42,
+  "limits": {
+    "max_cases": 20,
+    "concurrency": 4,
+    "timeout_ms": 3000
+  },
+  "test_recipients": [
+    "+919999999999",
+    "+918888888888",
+    "+917777777777"
+  ],
+  "cases": [
+    {
+      "name": "sms_success",
+      "kind": "sms",
+      "recipient": "+919999999999",
+      "body": "Hello from SMSLab! Your account is active.",
+      "scenario": "success",
+      "expected": "delivered"
+    },
+    {
+      "name": "sms_transient_failure",
+      "kind": "sms",
+      "recipient": "+918888888888",
+      "body": "Transient failure test — should succeed on retry.",
+      "scenario": "transient_failure",
+      "expected": "delivered"
+    },
+    {
+      "name": "sms_permanent_failure",
+      "kind": "sms",
+      "recipient": "+917777777777",
+      "body": "Permanent failure test — landline / DND number.",
+      "scenario": "permanent_failure",
+      "expected": "failed"
+    },
+    {
+      "name": "sms_rate_limited",
+      "kind": "sms",
+      "recipient": "+919999999999",
+      "body": "Rate limit test — provider returns 429.",
+      "scenario": "rate_limited",
+      "expected": "failed"
+    },
+    {
+      "name": "sms_timeout",
+      "kind": "sms",
+      "recipient": "+918888888888",
+      "body": "Timeout test — simulated latency exceeds timeout_ms.",
+      "scenario": "timeout",
+      "expected": "failed"
+    },
+    {
+      "name": "otp_success",
+      "kind": "otp",
+      "recipient": "+917777777777",
+      "scenario": "success",
+      "expected": "verified"
+    }
+  ]
+}
