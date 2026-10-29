@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from smslab.cli import main
+from smslab.burst import simulate_burst
 from smslab.config import ConfigError, load_config
 from smslab.otp import OtpService
 from smslab.phones import PhoneNumberError, normalize_indian_mobile
@@ -137,6 +138,41 @@ class TestCli(unittest.TestCase):
     def test_request_cap_enforced(self):
         with tempfile.TemporaryDirectory() as td:
             self.assertEqual(main(["loadtest", "--config", str(EXAMPLE), "--volume", "1001", "--report", str(Path(td) / "r.json")]), 2)
+
+
+class TestMockBurst(unittest.TestCase):
+    def test_ten_attempts_are_simulated_and_rate_limited(self):
+        report = simulate_burst(attempts=10, limit=2, window_seconds=60)
+        self.assertEqual(report["transport"], "none")
+        self.assertEqual(report["actual_transmissions"], 0)
+        self.assertEqual(report["summary"]["attempted"], 10)
+        self.assertEqual(report["summary"]["accepted_by_mock_limiter"], 2)
+        self.assertEqual(report["summary"]["rejected_rate_limit"], 8)
+        self.assertTrue(all(item["sms_sent"] is False for item in report["results"]))
+        self.assertTrue(all(item["recipient"] == "synthetic-test-recipient" for item in report["results"]))
+
+    def test_invalid_bounds_are_rejected(self):
+        for kwargs in (
+            {"attempts": 0},
+            {"attempts": 101},
+            {"attempts": 2, "limit": 3},
+            {"attempts": True},
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaises(ValueError):
+                    simulate_burst(**kwargs)
+
+    def test_cli_writes_a_mock_only_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            report_path = Path(td) / "burst.json"
+            code = main([
+                "mock-burst", "--attempts", "10", "--limit", "2",
+                "--window-seconds", "60", "--report", str(report_path),
+            ])
+            saved = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(code, 0)
+            self.assertEqual(saved["summary"]["rejected_rate_limit"], 8)
+            self.assertEqual(saved["actual_transmissions"], 0)
 
 
 class TestSafety(unittest.TestCase):
