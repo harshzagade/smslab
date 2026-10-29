@@ -1,8 +1,6 @@
-"""Allow `python -m smslab` as an alternative to the `smslab` console script."""
-
-import sys
+"""Allow running SMSLab as a module."""
 
 from smslab.cli import main
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

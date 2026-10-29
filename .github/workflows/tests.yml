@@ -27,11 +27,9 @@ jobs:
         run: python -m pip install -e .
       - name: Compile package
         run: python -m compileall -q smslab
-      - name: Run unit tests
+      - name: Run tests
         run: python -m unittest discover -s tests -v
-      - name: Run mock-only CLI smoke test
+      - name: Load-test smoke check
         run: |
-          smslab init --output /tmp/smslab-config.json
-          smslab validate --config /tmp/smslab-config.json
-          smslab run --config /tmp/smslab-config.json --report /tmp/smslab-report.json
-          python -c "import json; r=json.load(open('/tmp/smslab-report.json', encoding='utf-8')); assert r['summary']['total'] > 0"
+          smslab loadtest --config examples/config.example.json --volume 3 --concurrency 2 --report /tmp/smslab-load.json
+          python -c "import json; report=json.load(open('/tmp/smslab-load.json', encoding='utf-8')); assert report['summary']['total'] == 3; assert report['summary']['failed'] == 0"
