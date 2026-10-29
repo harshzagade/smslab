@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smslab"
-version = "2.0.0"
-description = "Mock-only SMS/OTP scenario and bounded load testing CLI"
+version = "2.1.0"
+description = "Mock-only SMS/OTP scenario, burst rate-limit, and bounded load testing CLI"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Harsh Zagade" }]
-keywords = ["sms", "otp", "mock", "testing", "load-testing", "cli"]
+keywords = ["sms", "otp", "mock", "testing", "load-testing", "rate-limit", "cli"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Console",
