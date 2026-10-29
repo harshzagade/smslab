@@ -10,6 +10,7 @@ SMSLab is the single maintained repository for mock-only SMS/OTP scenario testin
 - Run named SMS scenarios: success, retry after one transient failure, permanent failure, simulated timeout, and simulated rate limiting.
 - Run OTP lifecycle scenarios: correct verification, wrong code, expiry, and lockout after repeated incorrect attempts.
 - Run bounded concurrent load simulations with JSON reports for outcome counts, latency, error categories, and throughput.
+- Run an offline mock-burst against a fixed-window rate limiter; use synthetic labels only, with no phone-number target or SMS transport.
 - Reject non-mock transport configuration, non-allowlisted recipients, invalid settings, and requests beyond hard limits.
 - Use Python's standard library at runtime; no third-party messaging SDKs are installed.
 
@@ -42,6 +43,10 @@ Run a bounded simulated load test:
 
     smslab loadtest --config my-config.json --volume 100 --concurrency 5 --scenario success --report load-report.json
 
+Simulate 10 near-simultaneous requests against a local rate limiter (2 accepted, 8 rejected by default):
+
+    smslab mock-burst --attempts 10 --limit 2 --window-seconds 60 --report burst-report.json
+
 Check number formatting:
 
     smslab validate-phone 9876543210 "+91 98765 43210"
@@ -59,6 +64,7 @@ A nonzero CLI exit indicates a configuration/argument error or that one or more 
 - Recipients used by a test case must appear in the normalized test_recipients allowlist.
 - Hard caps are checked in code and cannot be raised by a config.
 - Mock timeout and rate-limit outcomes are simulated; the CLI does not wait for a carrier or make external requests.
+- `mock-burst` uses a synthetic recipient label, never accepts a phone-number target, records `sms_sent: false` for every attempt, and reports zero actual transmissions.
 - OTP values are held in memory for the verification flow; only SHA-256 digests are stored, and codes are not included in logs or reports.
 - The automated tests scan the package for common networking imports.
 
@@ -72,7 +78,7 @@ Hard limits are fixed in code: 100 configured cases, 1,000 simulated requests pe
 
 ## Reports
 
-JSON reports include schema version, timestamp, seed, simulated transport, concurrency, summary totals, expected-outcome pass/fail, simulated deliveries, latency, throughput, error types, and per-case outcomes. They never include OTP plaintext values.
+Scenario/load-test reports include schema version, timestamp, mock transport, concurrency, summary totals, expected-outcome pass/fail, simulated deliveries, latency, throughput, error types, and per-case outcomes. Mock-burst reports include attempted, mock-accepted, rate-limited, and actual-transmission counts. They never include OTP plaintext values.
 
 ## Development and tests
 
@@ -81,6 +87,7 @@ From the repository root, run:
     python -m compileall -q smslab
     python -m unittest discover -s tests -v
     smslab loadtest --config examples/config.example.json --volume 5 --concurrency 2 --report /tmp/smslab-report.json
+    smslab mock-burst --attempts 10 --limit 2 --window-seconds 60 --report /tmp/smslab-burst.json
 
 GitHub Actions runs the test suite and a load-test smoke test on Python 3.10, 3.11, and 3.12 for pushes and pull requests.
 
@@ -91,6 +98,7 @@ GitHub Actions runs the test suite and a load-test smoke test on Python 3.10, 3.
 - smslab/transport.py — local-only simulated SMS transport
 - smslab/otp.py — OTP expiry, verification, digest storage, and lockout
 - smslab/runner.py — concurrent scenario execution and JSON reporting
+- smslab/burst.py — bounded offline burst and rate-limit simulation
 - smslab/cli.py — command-line interface
 - tests/test_smslab.py — unit, integration, and safety checks
 
